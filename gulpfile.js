@@ -15,5 +15,4 @@ gulp.task('default', function() {
     gulp.watch('./*/js/*.js').on('change', browserSync.reload);
     gulp.watch('./*/html/*.html').on('change', browserSync.reload);
     //gulp.watch('./*/less/*.less').on('change', browserSync.reload);
-
 });
