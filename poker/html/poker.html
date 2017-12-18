@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>poker</title>
+    <meta charset=utf-8>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+    <style>
+        *{
+            box-sizing: border-box;
+        }
+        body{
+            /*font-size: 625%;*/
+        }
+        #__bs_notify__{
+            font-size: 0.14rem;
+        }
+        .btn{
+            width: 100px;
+            height: 40px;
+            background-color: #ff7385;
+            font-size: 24px;
+            color: #fff;
+        }
+    </style>
+    <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+
+    </head>
+<body onLoad="playInit()">
+<canvas id="canvas" width="500" height="500" style="border: 1px solid red;"></canvas>
+<button class="btn" id="send">出牌</button>
+<script>
+    const _ = {};
+    _.compare = function(arg){
+        return function(a,b){
+            var value1 = a[arg];
+            var value2 = b[arg];
+            return value1 - value2;
+        }
+    }
+    var Poker = {
+        aspect : 0.7,
+        angleAspect : 0.125,
+        height: 70,
+        borderWidth: 1,
+    };
+    ;(function () {
+        var drawMask = {
+            init: function (cav,space,w,x,y,cards) {
+                this.canvas = cav;
+                this.ctx = cav.getContext('2d');
+                this.cards = cards;
+                this._x;
+                this._y;
+                this.down = false;
+                this.surface = this.saveSurface();
+                this.space = space;
+                this.pw = w;
+                this.sw = space * (cards.length - 1) + w;
+                this.sh = Poker.height;
+                this.sx1 = x + w - this.sw - space + 1;
+                this.sx2 = x + w - space + 1;
+                this.sy1 = y+1;
+                this.sy2 = Poker.height + y;
+                this.bindEvents();
+            },
+            onDown: function(e){
+                e.preventDefault();
+                this.down = true;
+                this._x = e.layerX;
+                this._y = e.layerY;
+                if(this._x < this.sx1){
+                    this._x = this.sx1
+                }else if(this._x > this.sx2){
+                    this._x = this.sx2;
+                }
+            },
+            onMove: function(e){
+                if(!this.down){
+                    return;
+                }
+                var X = e.layerX,
+                    Y = e.layerY;
+                if((X >= this.sx1 && X <= this.sx2) && (Y >= this.sy1 && Y <= this.sy2)){
+                    this.paintRect(this._x,X);
+                }
+
+            },
+            onEnd: function(e){
+                if(!this.down){
+                    return;
+                }
+                this.checkSelect(this._xx,this._ww,this._last);
+                this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+                Poker.drawPokers(this.canvas,this.cards);
+                this.down = false;
+            },
+
+            paintRect: function (x,X) {
+                if(x == X) return false;
+                var c = this.ctx;
+                c.save();
+                c.clearRect(0,0,this.canvas.width,this.canvas.height);
+                this.restoreSurface(this.surface);
+                c.fillStyle = 'rgba(30,30,30,0.3)';
+                c.moveTo(x,this.sy1);
+                var x1 = x,w;
+                //判断初始点大于移动的点时的情况
+                var preWidth = this.sx1 + this.space * (this.cards.length - 1);
+                this._last = false;
+                if(x > X){
+                    if(x > preWidth){
+                        x = this.sx2;
+                        var length = 0;
+                        if(x - X  > this.pw){
+                            length = parseInt((x - this.pw - X)/this.space) +(X <= this.sx1 ? 0 : 1);
+                        }
+                        w = this.pw + length* this.space;
+                        this._last = true;
+                    }else{
+                        x = this.sx1 + (parseInt((x-this.sx1)/this.space)+1)*this.space;
+                        w = (parseInt((x - X)/this.space) +(X <= this.sx1 ? 0 : 1))* this.space;
+                    }
+                    x1 = x - w;
+                }else{
+                    if(x > preWidth){
+                        x1 = this.sx1 + this.space * (this.cards.length - 1);
+                        w = this.pw;
+                        this._last = true;
+                    }else{
+                        x1 = this.sx1 + parseInt((x-this.sx1)/this.space)*this.space;
+                        var _X = X;
+                        if(X >= preWidth){
+                            _X = this.sx2 - this.pw;
+                        }
+                        w = (parseInt((_X - x)/this.space) + (x <= this.sx1 ? 0 : 1)) * this.space + (X > preWidth ? this.pw : 0)
+                    }
+                }
+                this._xx = x1;
+                this._ww = w;
+                var selected = this.checkIndex(x1,this._last).selected;
+                var _sy1 = selected ? this.sy1 - 6 : this.sy1;
+                c.fillRect(x1,_sy1,w,this.sh);
+                c.restore();
+            },
+
+            saveSurface: function () {
+                return this.ctx.getImageData(0,0,this.canvas.width,this.canvas.height);
+            },
+
+            restoreSurface: function (data) {
+                if(!data) return false;
+                this.ctx.putImageData(data,0,0);
+            },
+
+            checkSelect: function (x,w,last) {
+                console.log(x,w,last)
+                var cards = this.cards,
+                    length = w / this.space,
+                    start = (x - this.sx1)/this.space;
+                if(last){
+                    cards[cards.length-1].selected = !cards[cards.length-1].selected;
+                    length = (w - this.pw) / this.space;
+                }
+                for(var i = start; i < start + length; i++){
+                    cards[i].selected = !cards[i].selected;
+                }
+            },
+
+            checkIndex: function (x,last) {
+                var cards = this.cards,
+                    index = (x - this.sx1)/this.space;
+                var obj = {
+                    index : index,
+                    selected : cards[index].selected
+                };
+                if(last){
+                    obj.index = cards.length-1;
+                    obj.selected = cards[cards.length-1].selected;
+                }
+                return obj;
+            },
+
+            bindEvents: function () {
+                var isTouch = 'ontouchstart' in window;
+                var mouseEvents = isTouch ?
+                    {
+                        down: 'touchstart',
+                        move: 'touchmove',
+                        end: 'touchend',
+                    } :
+                    {
+                        down: 'mousedown',
+                        move: 'mousemove',
+                        end: 'mouseup',
+                    }
+                var cav = this.canvas;
+                cav.addEventListener(mouseEvents.down,this.onDown.bind(this),false);
+                cav.addEventListener(mouseEvents.move,this.onMove.bind(this),false);
+                cav.addEventListener(mouseEvents.end,this.onEnd.bind(this),false);
+            }
+        }
+
+        //region 绘制扑克
+        //绘制卡片边框
+        function pBorder(cav,x,y,p){
+            var b = new Border(cav,Poker.height);
+            var c = cav.getContext("2d");
+            var w= b.width,h=b.height,r=b.width*Poker.angleAspect;
+            b.X = x = x + 1,
+            b.Y = y = y+(p.selected ? -5 : 1);
+            c.save();
+            c.lineWidth = Poker.borderWidth;
+            c.strokeStyle = "#ff7385";
+            c.fillStyle = "white";
+            c.beginPath();
+            c.moveTo(x+r,y);
+            //顶部的线
+            c.lineTo(x + w - r,y);
+            //右上圆角
+            c.arcTo(x+w,y,x+w,y+r,r);
+            //右侧的线
+            c.lineTo(x+w,y+h-r);
+            //右下圆角
+            c.arcTo(x+w,y+h,x+w-r,y+h,r);
+            //底部的线
+            c.lineTo(x+r,y+h);
+            //左下圆角
+            c.arcTo(x,y+h,x,y+h-r,r);
+            //左侧的线
+            c.lineTo(x,y+r);
+            //左上圆角
+            c.arcTo(x,y,x+r,y,r);
+
+
+            c.closePath();
+            c.stroke();
+            c.fill();
+            c.restore();
+            return b;
+        }
+
+        //绘制卡片图案
+        function pPattern(b,p){
+            var fontSize = parseInt(b.width*0.32);
+            var fontWeight = "bold";
+            var fontColor = p.color;
+            var name = p.pattern,
+                x = b.X + 2,
+                y = b.Y + fontSize+4;
+            var ctx = b.ctx;
+            ctx.font = (fontWeight + ' ' + fontSize + 'px Microsoft YaHei');
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'hanging';
+            ctx.fillStyle = fontColor;
+
+            ctx.fillText(name, x, y);
+
+        }
+
+        //绘制卡片号码
+        function pName(b,p){
+            var fontSize = parseInt(b.width*0.32);
+            var fontWeight = "bold";
+            var fontColor = p.color;
+            var name = p.number,
+                x = b.X + 4,
+                y = b.Y + 4;
+            var ctx = b.ctx;
+            ctx.font = (fontWeight + ' ' + fontSize + 'px Microsoft YaHei');
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'hanging';
+            ctx.fillStyle = fontColor;
+
+            ctx.fillText(name, x, y);
+
+        }
+
+        //边框实例
+        function Border(cav,h){
+            this.ctx = cav.getContext('2d');
+            this.height = h;
+            this.width = h * Poker.aspect;
+            this.X;
+            this.Y;
+        }
+
+        //绘制个人获得的卡片组
+        Poker.drawPokers = function(cav,cards,x,y){
+            x = x || 10,
+            y = y || 50;
+            var w = Poker.height * Poker.aspect;
+            var space = parseInt(w * 0.35) + 5;
+            cards = cards.sort(_.compare('value')).reverse();
+            cards.map(function(card){
+                drawPoker(cav,card,x,y);
+                x = x + space;
+            })
+            drawMask.init(cav,space,w,x,y,cards);
+        }
+
+        //绘制单个卡片
+        function drawPoker(cav,card,x,y){
+            var c = cav.getContext("2d");
+            c.save();
+            c.globalCompositeOperation = 'source-over';
+            var b = pBorder(cav,x,y,card);
+            pName(b,card);
+            pPattern(b,card);
+            c.restore();
+        }
+        //endregion
+    })();
+
+
+    let playersAll = [];
+
+    const player = function(obj){
+        this.playerId = obj.playerId || 'player_'+ new Date().getTime()*parseInt(Math.random()*1000);
+        this.name = obj.name;
+        this.cards = [];
+        this.start = false;
+    }
+
+    const card = function(obj){
+        this.name = obj.name;
+        this.number = obj.number;
+        this.value = obj.value;
+        this.color = obj.color;
+        this.pattern = obj.pattern;
+        this.selected = false;
+    }
+
+    let cards = [],
+        cardNumbers = [3,4,5,6,7,8,9,10,'J','Q','K',1,2],
+        cardKing = [{name:'大王',pattern:'大王',color:'#ff7385'},
+            {name:'小王',pattern:'小王',color:'#e3e3e3'}],
+        cardTypes = [
+            {name:'黑桃',pattern:'♠',color:'#2d2d2d'},
+            {name:'梅花',pattern:'♣',color:'#2d2d2d'},
+            {name:'红桃',pattern:'♥️',color:'#ff7385'},
+            {name:'方块',pattern:'♦',color:'#ff7385'}
+        ];
+
+    ;(function(){
+        for(let i = 0,n; n = cardNumbers[i++];){
+            for(let j in cardTypes){
+                let obj = new Object(),
+                    type = cardTypes[j];
+                obj.name = type.name;
+                obj.number = n;
+                obj.value = i+0.1*j;
+                obj.pattern = type.pattern;
+                obj.color = type.color;
+                cards.push(new card(obj));
+            }
+        }
+    })();
+
+    (function(){
+        for(let i = 0,n; n = cardKing[i++];){
+            let obj = new Object();
+            obj.name = n.name;
+            obj.number = cardNumbers.length + 1;
+            obj.value = obj.number + i;
+            obj.pattern = n.pattern;
+            obj.color = n.color;
+            cards.push(new card(obj));
+        }
+    })();
+
+    const playerFactory = function(p){
+        let newPlayer = new player(p);
+        playerDerector.on('addPlayer',newPlayer);
+        return newPlayer;
+    }
+
+
+
+    const playerDerector = (function(){
+        let players = [],
+            options = {};
+
+        options.addPlayer = function(player){
+            players[player.playerId] = player;
+            playersAll.push(player);
+        }
+
+        const on = function(){
+            var message = Array.prototype.shift.call(arguments);
+            options[message].apply(this,arguments);
+        };
+        return {
+            on: on
+        }
+
+    })();
+
+    const cardsDerector = (function(){
+        let options = {};
+        const selectCard = function(){
+            var cardsLength = cards.length;
+            var index =  parseInt(Math.random() * (cardsLength-1));
+            var card = cards[index];
+            cards.splice(index,1);
+            return card;
+        }
+        options.selectCard = function(){
+            var cardsLength = cards.length;
+            var index =  parseInt(Math.random() * (cardsLength-1));
+            var card = cards[index];
+            cards.splice(index,1);
+            return card;
+        }
+        options.allotCards = function(player,card){
+            player.cards.push(card)
+        }
+        options.sendCards = function(player){
+            var myCards = player.cards;
+            var newCards = myCards.filter(function (card) {
+                return !card.selected
+            })
+            return newCards;
+            console.log(newCards)
+
+        }
+        const on = function(){
+            var message = Array.prototype.shift.call(arguments);
+            return options[message].apply(this,arguments);
+        };
+        return {
+            on: on,
+            selectCard: selectCard
+        }
+
+    })();
+
+    let player1Obj = {
+        playerId : 'player_'+ new Date().getTime()*parseInt(Math.random()*1000),
+        name : 'beibei'
+    }
+    let player2Obj = {
+        playerId : 'player_'+ new Date().getTime()*parseInt(Math.random()*1000),
+        name : 'baba'
+    }
+    let player3Obj = {
+        playerId : 'player_'+ new Date().getTime()*parseInt(Math.random()*1000),
+        name : 'baby'
+    }
+    let player1 = playerFactory(player1Obj);
+    let player2 = playerFactory(player2Obj);
+    let player3 = playerFactory(player3Obj);
+
+    (function(){
+        for(let p in playersAll) {
+            for (let c = 0; c < 17; c++) {
+                let card = cardsDerector.on('selectCard'),
+                    player = playersAll[p];
+                cardsDerector.on('allotCards',player,card);
+
+            }
+        }
+    })();
+    function playInit(){
+        let canvas = $('#canvas')[0];
+        let ctx = canvas.getContext('2d');
+        ctx.clearRect(0,0,this.canvas.width,this.canvas.height);
+        Poker.drawPokers(canvas,player1.cards);
+    }
+
+    const send = document.getElementById('send');
+    send.addEventListener('click',function(){
+        player1.cards = cardsDerector.on('sendCards',player1);
+        playInit();
+    })
+</script>
+
+
+</body>
+</html>
