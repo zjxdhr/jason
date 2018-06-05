@@ -1,0 +1,100 @@
+.drag-wrap {
+
+   .isInPath {
+     position: relative;
+     &:before {
+       content: '';
+       border-color: transparent!important;
+     }
+     &:after {
+       content: '';
+       position: absolute;
+       top: 0;
+       left: 0;
+       width: 100%;
+       height: 100%;
+       background-color: rgba(0,0,0,0.2);
+       border-color: transparent!important;
+     }
+   }
+   &.row {
+     .isInPath {
+       position: relative;
+       &:before {
+         content: '';
+         position: absolute;
+         top: 0;
+         left: -2px;
+         height: 100%;
+         border-left: 2px dashed #aaa;
+       }
+     }
+     .isBelowLastPath {
+       position: relative;
+       &:after {
+         content: '';
+         position: absolute;
+         height: 100%;
+         top: 0;
+         right: -2px;
+         border-right: 2px dashed #aaa;
+       }
+     }
+   }
+   &.colunm {
+     .isInPath {
+       position: relative;
+       &:before {
+         content: '';
+         position: absolute;
+         top: -2px;
+         left: 0;
+         width: 100%;
+         border-top: 2px dashed #aaa;
+       }
+     }
+     .isBelowLastPath {
+       position: relative;
+       &:after {
+         content: '';
+         position: absolute;
+         bottom: -2px;
+         left: 0;
+         width: 100%;
+         border-bottom: 2px dashed #aaa;
+       }
+     }
+   }
+   .dark {
+     position: relative;
+     * {
+       opacity: 0.5;
+     }
+     &:before,
+     &:after {
+       opacity: 1;
+     }
+   }
+   .NaN,
+   .no-action {
+     &.dark * {
+       opacity: 1;
+     }
+     &.isInPath:before,
+     &.isInPath:after,
+     &.isBelowLastPath:before,
+     &.isBelowLastPath:after {
+       background-color: transparent!important;
+       border-color: transparent!important;
+     }
+   }
+ }
+
+.tempBox {
+  position: fixed;
+  margin: 0;
+  z-index: 1002;
+  -webkit-transform: translate(-10px, -10px) rotate(3deg);
+  transform: translate(-10px, -10px) rotate(3deg);
+  cursor: move;
+}

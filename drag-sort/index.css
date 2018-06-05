@@ -1,0 +1,94 @@
+.drag-wrap .isInPath {
+  position: relative;
+}
+.drag-wrap .isInPath:before {
+  content: '';
+  border-color: transparent!important;
+}
+.drag-wrap .isInPath:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-color: transparent!important;
+}
+.drag-wrap.row .isInPath {
+  position: relative;
+}
+.drag-wrap.row .isInPath:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -2px;
+  height: 100%;
+  border-left: 2px dashed #aaa;
+}
+.drag-wrap.row .isBelowLastPath {
+  position: relative;
+}
+.drag-wrap.row .isBelowLastPath:after {
+  content: '';
+  position: absolute;
+  height: 100%;
+  top: 0;
+  right: -2px;
+  border-right: 2px dashed #aaa;
+}
+.drag-wrap.colunm .isInPath {
+  position: relative;
+}
+.drag-wrap.colunm .isInPath:before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 100%;
+  border-top: 2px dashed #aaa;
+}
+.drag-wrap.colunm .isBelowLastPath {
+  position: relative;
+}
+.drag-wrap.colunm .isBelowLastPath:after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  border-bottom: 2px dashed #aaa;
+}
+.drag-wrap .dark {
+  position: relative;
+}
+.drag-wrap .dark * {
+  opacity: 0.5;
+}
+.drag-wrap .dark:before,
+.drag-wrap .dark:after {
+  opacity: 1;
+}
+.drag-wrap .NaN.dark *,
+.drag-wrap .no-action.dark * {
+  opacity: 1;
+}
+.drag-wrap .NaN.isInPath:before,
+.drag-wrap .no-action.isInPath:before,
+.drag-wrap .NaN.isInPath:after,
+.drag-wrap .no-action.isInPath:after,
+.drag-wrap .NaN.isBelowLastPath:before,
+.drag-wrap .no-action.isBelowLastPath:before,
+.drag-wrap .NaN.isBelowLastPath:after,
+.drag-wrap .no-action.isBelowLastPath:after {
+  background-color: transparent!important;
+  border-color: transparent!important;
+}
+.tempBox {
+  position: fixed;
+  margin: 0;
+  z-index: 1002;
+  -webkit-transform: translate(-10px, -10px) rotate(3deg);
+  transform: translate(-10px, -10px) rotate(3deg);
+  cursor: move;
+}
